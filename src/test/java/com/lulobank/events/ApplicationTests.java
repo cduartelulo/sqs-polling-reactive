@@ -1,4 +1,4 @@
-package com.lulobank.events.sqspollingreactive;
+package com.lulobank.events;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
