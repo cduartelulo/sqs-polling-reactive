@@ -1,0 +1,3 @@
+aws:
+  sqs:
+    queue-name: "cduarte-queue"
