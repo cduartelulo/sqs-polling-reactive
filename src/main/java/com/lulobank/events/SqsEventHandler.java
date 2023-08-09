@@ -16,7 +16,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 
@@ -63,16 +62,16 @@ public class SqsEventHandler implements EventHandler {
                                     .doOnNext(either -> either.fold(
                                             left -> Mono.just(left)
                                                         .doOnNext(value -> LOGGER.info(either.getLeft()))
-                                                        .delayElement(Duration.ofSeconds(5))
+                                                        //.delayElement(Duration.ofSeconds(5))
                                                         .then(Mono.fromSupplier(() -> Try.run(changeVisibilityTimeoutHandle::run)))
                                                         .doOnError(s -> LOGGER.error("Error while changing visibility timeout", s))
                                                         .doOnNext(s -> LOGGER.info("Message visibility changed"))
                                                         .subscribe(),
 
                                             right -> Mono.just(right)
-                                                        .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
-                                                        .doOnNext(value -> LOGGER.info(either.get()))
-                                                        .subscribe()
+                                                         .doOnNext(value -> LOGGER.info(either.get()))
+                                                         .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
+                                                         .subscribe()
                                     ))
                                     .onErrorResume(t -> {
                                         LOGGER.error(t.getMessage(), t);
@@ -81,7 +80,7 @@ public class SqsEventHandler implements EventHandler {
                                     .then()
                                     .subscribeOn(taskScheduler);
                         },concurrency)
-                .subscribeOn(Schedulers.newBoundedElastic(10, 100, "taskThread"))
+                .subscribeOn(Schedulers.newBoundedElastic(10, 100, "subscribeThread"))
                 .subscribe();
     }
 
@@ -104,6 +103,6 @@ public class SqsEventHandler implements EventHandler {
         sqsClient.changeMessageVisibility(builder -> builder
                 .queueUrl(QUEUE_URL)
                 .receiptHandle(receiptHandle)
-                .visibilityTimeout(0));
+                .visibilityTimeout(5));
     }
 }

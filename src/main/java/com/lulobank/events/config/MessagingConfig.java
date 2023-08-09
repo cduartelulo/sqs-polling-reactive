@@ -1,5 +1,6 @@
 package com.lulobank.events.config;
 
+import com.lulobank.events.EventHandler;
 import com.lulobank.events.SqsEventHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,6 @@ public class MessagingConfig {
     public SqsClient sqsClient(SqsProperties sqsProperties) {
         SqsClientBuilder sqsClientBuilder = SqsClient
                                                 .builder()
-                                                .region(Region.of(sqsProperties.getRegion()))
                                                 .credentialsProvider(ProfileCredentialsProvider.create(sqsProperties.getAwsProfile()));
         if (StringUtils.hasText(sqsProperties.getEndpoint())) {
             sqsClientBuilder.endpointOverride(URI.create(sqsProperties.getEndpoint()));
@@ -43,7 +43,7 @@ public class MessagingConfig {
     }
 
     @Bean
-    public SqsEventHandler eventHandler(SqsClient sqsClient) {
+    public EventHandler eventHandler(SqsClient sqsClient) {
         return new SqsEventHandler(sqsClient);
     }
 }
