@@ -1,6 +1,7 @@
 package com.lulobank.events;
 
 import com.lulobank.events.config.SqsProperties;
+import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -35,9 +36,12 @@ class MessageListenerRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        eventHandler.handle(5, message -> Mono.fromRunnable(() -> {
-            LOGGER.info("Received message: {}", message);
+//        eventHandler.handle(5, message -> Mono.fromRunnable(() -> {
+//            LOGGER.info("Message handled successfully: {}", message);
+//        }));
+        eventHandler.handle(5, message -> Mono.fromSupplier(() -> {
+            return Either.left("Error handling the message: " + message);
+            //return Either.right("Message handled successfully: " + message);
         }));
     }
 }
-

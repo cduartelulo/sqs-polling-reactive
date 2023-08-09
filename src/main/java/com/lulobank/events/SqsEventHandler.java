@@ -1,6 +1,7 @@
 package com.lulobank.events;
 
-import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import io.vavr.control.Either;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 
@@ -29,7 +31,7 @@ public class SqsEventHandler implements EventHandler {
         this.sqsClient = sqsClient;
     }
 
-    public void handle(int concurrency, Function<String, Mono<Void>> task) {
+    public void handle(int concurrency, Function<String, Mono<Either<String, String>>> task) {
         Flux.generate(
                 (SynchronousSink<List<Message>> sink) -> {
                             ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
@@ -46,17 +48,31 @@ public class SqsEventHandler implements EventHandler {
                 .flatMapIterable(Function.identity())
                 .doOnError(t -> LOGGER.error(t.getMessage(), t))
                 .retry()
-                .map(message -> {
-                    String messageBody = message.body();
-                    return new Tuple2<String, Runnable>(messageBody, () -> deleteQueueMessage(message.receiptHandle()));
-                })
+                .map(message ->
+                        new Tuple3<Message, Runnable, Runnable>(
+                                message,
+                                () -> deleteQueueMessage(message.receiptHandle()),
+                                () -> changeVisibilityTimeout(message.receiptHandle())))
                 .flatMap(
-                        (Tuple2<String, Runnable> tuple) -> {
-                            String message = tuple._1;
+                        (Tuple3<Message, Runnable, Runnable> tuple) -> {
+                            Message message = tuple._1;
                             Runnable deleteHandle = tuple._2;
+                            Runnable changeVisibilityTimeoutHandle = tuple._3;
                             return task
-                                    .apply(message)
-                                    .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)
+                                    .apply(message.body())
+                                    .doOnNext(either -> either.fold(
+                                            left -> Mono.just(left)
+                                                        .doOnNext(value -> LOGGER.info(either.getLeft()))
+                                                        .delayElement(Duration.ofSeconds(5))
+                                                        .then(Mono.fromSupplier(() -> Try.run(changeVisibilityTimeoutHandle::run)))
+                                                        .doOnError(s -> LOGGER.error("Error while changing visibility timeout", s))
+                                                        .doOnNext(s -> LOGGER.info("Message visibility changed"))
+                                                        .subscribe(),
+
+                                            right -> Mono.just(right)
+                                                        .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
+                                                        .doOnNext(value -> LOGGER.info(either.get()))
+                                                        .subscribe()
                                     ))
                                     .onErrorResume(t -> {
                                         LOGGER.error(t.getMessage(), t);
@@ -82,5 +98,12 @@ public class SqsEventHandler implements EventHandler {
             LOGGER.error("Error while deleting message from queue={}", receiptHandle, e);
         }
 
+    }
+
+    private void changeVisibilityTimeout(String receiptHandle) {
+        sqsClient.changeMessageVisibility(builder -> builder
+                .queueUrl(QUEUE_URL)
+                .receiptHandle(receiptHandle)
+                .visibilityTimeout(0));
     }
 }

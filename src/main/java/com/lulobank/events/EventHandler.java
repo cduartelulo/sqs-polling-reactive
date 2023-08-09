@@ -1,5 +1,6 @@
 package com.lulobank.events;
 
+import io.vavr.control.Either;
 import reactor.core.publisher.Mono;
 
 import java.util.function.Function;
@@ -11,5 +12,5 @@ public interface EventHandler {
      * @param concurrency - level of parallelization
      * @param task - describes how a message should be handled
      */
-    void handle(int concurrency, Function<String, Mono<Void>> task);
+    void handle(int concurrency, Function<String, Mono<Either<String, String>>> task);
 }
