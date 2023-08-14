@@ -20,17 +20,17 @@ import java.util.List;
 import java.util.function.Function;
 
 
-public class SqsEventHandler implements EventHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqsEventHandler.class);
+public class SqsMessageListener implements MessageListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqsMessageListener.class);
     private final SqsClient sqsClient;
     private static final String QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/900852371335/cduarte-queue";
     private final Scheduler taskScheduler = Schedulers.newBoundedElastic(10, 100, "taskThread");
 
-    public SqsEventHandler(SqsClient sqsClient) {
+    public SqsMessageListener(SqsClient sqsClient) {
         this.sqsClient = sqsClient;
     }
 
-    public void handle(int concurrency, Function<String, Mono<Either<String, String>>> task) {
+    public void listen(int concurrency, Function<String, Either<String, String>> task) {
         Flux.generate(
                 (SynchronousSink<List<Message>> sink) -> {
                             ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
@@ -38,14 +38,13 @@ public class SqsEventHandler implements EventHandler {
                                     .maxNumberOfMessages(5)
                                     .waitTimeSeconds(10)
                                     .build();
-
                             List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
                             LOGGER.info("Received: {}", messages);
                             sink.next(messages);
                         }
                 )
                 .flatMapIterable(Function.identity())
-                .doOnError(t -> LOGGER.error(t.getMessage(), t))
+                .doOnError(t -> LOGGER.error(t.getMessage()))
                 .retry()
                 .map(message ->
                         new Tuple3<Message, Runnable, Runnable>(
@@ -57,21 +56,24 @@ public class SqsEventHandler implements EventHandler {
                             Message message = tuple._1;
                             Runnable deleteHandle = tuple._2;
                             Runnable changeVisibilityTimeoutHandle = tuple._3;
-                            return task
-                                    .apply(message.body())
+                            return Mono
+                                    .fromSupplier(() -> task.apply(message.body()))
                                     .doOnNext(either -> either.fold(
                                             left -> Mono.just(left)
                                                         .doOnNext(value -> LOGGER.info(either.getLeft()))
-                                                        //.delayElement(Duration.ofSeconds(5))
                                                         .then(Mono.fromSupplier(() -> Try.run(changeVisibilityTimeoutHandle::run)))
+                                                        //TODO: Review doOnError and doOnNext
                                                         .doOnError(s -> LOGGER.error("Error while changing visibility timeout", s))
                                                         .doOnNext(s -> LOGGER.info("Message visibility changed"))
+                                                        .then()
                                                         .subscribe(),
 
                                             right -> Mono.just(right)
-                                                         .doOnNext(value -> LOGGER.info(either.get()))
-                                                         .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
-                                                         .subscribe()
+                                                        //TODO: Review doOnError and doOnNext
+                                                        .doOnNext(value -> LOGGER.info(either.get()))
+                                                        .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
+                                                        .then()
+                                                        .subscribe()
                                     ))
                                     .onErrorResume(t -> {
                                         LOGGER.error(t.getMessage(), t);

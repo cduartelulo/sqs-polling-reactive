@@ -1,7 +1,7 @@
 package com.lulobank.events.config;
 
-import com.lulobank.events.EventHandler;
-import com.lulobank.events.SqsEventHandler;
+import com.lulobank.events.MessageListener;
+import com.lulobank.events.SqsMessageListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
@@ -43,7 +43,7 @@ public class MessagingConfig {
     }
 
     @Bean
-    public EventHandler eventHandler(SqsClient sqsClient) {
-        return new SqsEventHandler(sqsClient);
+    public MessageListener eventHandler(SqsClient sqsClient) {
+        return new SqsMessageListener(sqsClient);
     }
 }
