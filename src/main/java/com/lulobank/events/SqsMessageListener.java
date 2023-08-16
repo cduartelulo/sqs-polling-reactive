@@ -36,7 +36,7 @@ public class SqsMessageListener implements MessageListener {
                             ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                                     .queueUrl(QUEUE_URL)
                                     .maxNumberOfMessages(5)
-                                    .waitTimeSeconds(10)
+                                    .waitTimeSeconds(20)
                                     .build();
                             List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
                             LOGGER.info("Received: {}", messages);
@@ -60,23 +60,19 @@ public class SqsMessageListener implements MessageListener {
                                     .fromSupplier(() -> task.apply(message.body()))
                                     .doOnNext(either -> either.fold(
                                             left -> Mono.just(left)
-                                                        .doOnNext(value -> LOGGER.info(either.getLeft()))
                                                         .then(Mono.fromSupplier(() -> Try.run(changeVisibilityTimeoutHandle::run)))
                                                         //TODO: Review doOnError and doOnNext
-                                                        .doOnError(s -> LOGGER.error("Error while changing visibility timeout", s))
-                                                        .doOnNext(s -> LOGGER.info("Message visibility changed"))
                                                         .then()
                                                         .subscribe(),
 
                                             right -> Mono.just(right)
                                                         //TODO: Review doOnError and doOnNext
-                                                        .doOnNext(value -> LOGGER.info(either.get()))
                                                         .then(Mono.fromSupplier(() -> Try.run(deleteHandle::run)))
                                                         .then()
                                                         .subscribe()
                                     ))
                                     .onErrorResume(t -> {
-                                        LOGGER.error(t.getMessage(), t);
+                                        LOGGER.error(t.getMessage());
                                         return Mono.empty();
                                     })
                                     .then()
@@ -93,10 +89,10 @@ public class SqsMessageListener implements MessageListener {
                     .receiptHandle(receiptHandle)
                     .build();
             sqsClient.deleteMessage(deleteMessageRequest);
-            LOGGER.info("Deleted queue message handler={}", receiptHandle);
+            LOGGER.debug("Deleted queue message receiptHandle={}", receiptHandle);
         }
         catch (SqsException e) {
-            LOGGER.error("Error while deleting message from queue={}", receiptHandle, e);
+            LOGGER.error("Error while deleting message from queue={}", receiptHandle);
         }
 
     }
@@ -106,5 +102,6 @@ public class SqsMessageListener implements MessageListener {
                 .queueUrl(QUEUE_URL)
                 .receiptHandle(receiptHandle)
                 .visibilityTimeout(5));
+        LOGGER.debug("Message visibility changed for receiptHandle={}", receiptHandle);
     }
 }
