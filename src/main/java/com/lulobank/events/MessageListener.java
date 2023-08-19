@@ -11,5 +11,5 @@ public interface MessageListener {
      * @param concurrency - level of parallelization
      * @param task - describes how a message should be handled
      */
-    void listen(int concurrency, Function<String, Either<String, String>> task);
+    void listen(int concurrency, Function<String, Either<?, Void>> task);
 }

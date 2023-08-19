@@ -1,5 +1,6 @@
 package com.lulobank.events;
 
+import io.vavr.control.Either;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +25,12 @@ public class MessageListenerRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         messageListener
                 .listen(5, message ->
-                        Try
-                            .run(() -> Thread.sleep(new Random().nextInt(2000)))
-                            .toEither()
-                            .map(s -> "Message handled successfully: " + message)
-                            .mapLeft(Throwable::getMessage));
+                        {
+                            Try.run(() -> Thread.sleep(new Random().nextInt(2000)));
+                            LOGGER.debug("Message processed: {}", message);
+                            return Either.right(null);
+                        }
+                );
     }
 }
 
