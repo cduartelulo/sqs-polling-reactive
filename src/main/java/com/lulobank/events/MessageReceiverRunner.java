@@ -11,20 +11,20 @@ import org.springframework.stereotype.Component;
 import java.util.Random;
 
 @Component
-public class MessageListenerRunner implements ApplicationRunner {
-   private final MessageListener messageListener;
+public class MessageReceiverRunner implements ApplicationRunner {
+   private final MessageReceiver messageReceiver;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(com.lulobank.events.MessageListenerRunner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageReceiverRunner.class);
 
-    public MessageListenerRunner(MessageListener messageListener) {
-        this.messageListener = messageListener;
+    public MessageReceiverRunner(MessageReceiver messageReceiver) {
+        this.messageReceiver = messageReceiver;
     }
 
 
     @Override
     public void run(ApplicationArguments args) {
-        messageListener
-                .listen(5, message ->
+        messageReceiver
+                .execute(message ->
                         {
                             Try.run(() -> Thread.sleep(new Random().nextInt(2000)));
                             LOGGER.debug("Message processed: {}", message);

@@ -1,7 +1,4 @@
-aws:
-  sqs:
-    queue-name: "cduarte-queue"
-
 logging:
   level:
     com.lulobank.events: DEBUG
+

@@ -1,12 +1,12 @@
 package com.lulobank.events.config;
 
-import com.lulobank.events.MessageListener;
-import com.lulobank.events.SqsMessageListener;
+import com.lulobank.events.MessageReceiver;
+import com.lulobank.events.SqsMessageReceiver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -18,32 +18,31 @@ import java.net.URI;
 public class MessagingConfig {
 
     @Bean
-    public SqsClient sqsClient(SqsProperties sqsProperties) {
+    public SqsClient sqsClient(AWSProperties awsProperties) {
         SqsClientBuilder sqsClientBuilder = SqsClient
                                                 .builder()
-                                                .credentialsProvider(ProfileCredentialsProvider.create(sqsProperties.getAwsProfile()));
-        if (StringUtils.hasText(sqsProperties.getEndpoint())) {
-            sqsClientBuilder.endpointOverride(URI.create(sqsProperties.getEndpoint()));
+                                                .credentialsProvider(ProfileCredentialsProvider.create(awsProperties.getProfile()));
+        if (StringUtils.hasText(awsProperties.getSqs().getEndpoint())) {
+            sqsClientBuilder.endpointOverride(URI.create(awsProperties.getSqs().getEndpoint()));
         }
         return sqsClientBuilder.build();
     }
 
     @Bean
-    public SqsAsyncClient sqsAsyncClient(SqsProperties sqsProperties) {
+    public SqsAsyncClient sqsAsyncClient(AWSProperties awsProperties) {
         SqsAsyncClientBuilder sqsAsyncClientBuilder = SqsAsyncClient
                                                         .builder()
-                                                        .region(Region.of(sqsProperties.getRegion()))
-                                                        .credentialsProvider(ProfileCredentialsProvider.create(sqsProperties.getAwsProfile()));
+                                                        .credentialsProvider(ProfileCredentialsProvider.create(awsProperties.getProfile()));
 
-        if (StringUtils.hasText(sqsProperties.getEndpoint())) {
-            sqsAsyncClientBuilder.endpointOverride(URI.create(sqsProperties.getEndpoint()));
+        if (StringUtils.hasText(awsProperties.getSqs().getEndpoint())) {
+            sqsAsyncClientBuilder.endpointOverride(URI.create(awsProperties.getSqs().getEndpoint()));
         }
 
         return sqsAsyncClientBuilder.build();
     }
 
     @Bean
-    public MessageListener eventHandler(SqsClient sqsClient) {
-        return new SqsMessageListener(sqsClient);
+    public MessageReceiver messageReceiver1(SqsClient sqsClient, @Autowired AWSProperties awsProperties) {
+        return new SqsMessageReceiver(sqsClient, awsProperties.getSqs().getReceiver1());
     }
 }

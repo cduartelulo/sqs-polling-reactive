@@ -9,16 +9,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 class SqsEventHandlerTest {
 
     @Autowired
-    private MessageListener messageListener;
+    private MessageReceiver messageReceiver;
 
     @Test
     void testWhenHandlerNotHaveError() {
-        messageListener.listen(5, message -> Either.right(null));
+        messageReceiver.execute(message -> Either.right(null));
     }
 
     @Test
     void testWhenHandlerHaveError() {
-        messageListener.listen(5, message -> Either.left(new RuntimeException("Error handling the message: " + message)));
+        messageReceiver.execute(message -> Either.left(new RuntimeException("Error handling the message: " + message)));
     }
 
 }
