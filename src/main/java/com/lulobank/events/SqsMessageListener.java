@@ -28,6 +28,8 @@ public class SqsMessageListener implements MessageListener {
     private static final int DEFAULT_WAIT_TIME_SECONDS = 20;
     private final SqsClient sqsClient;
     private final SQSListenerProperties.SQS.Listener listenerProperties;
+
+    // TODO: Review if subscribeScheduler is needed, if so, review the parameters
     private final Scheduler subscribeScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "subscribeThread");
     //TODO: Research about concurrency, review if DEFAULT_BOUNDED_ELASTIC_SIZE / 2 is ok
     private final int DEFAULT_CONCURRENCY = DEFAULT_BOUNDED_ELASTIC_SIZE / 2;
