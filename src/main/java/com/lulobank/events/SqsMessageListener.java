@@ -1,6 +1,6 @@
 package com.lulobank.events;
 
-import com.lulobank.events.config.ReceiverProperties;
+import com.lulobank.events.config.SQSListenerProperties;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,36 +10,41 @@ import reactor.core.publisher.SynchronousSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SqsResponse;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_SIZE;
 
 
-public class SqsMessageReceiver implements MessageReceiver {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqsMessageReceiver.class);
+public class SqsMessageListener implements MessageListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqsMessageListener.class);
+    private static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 5;
+    private static final int DEFAULT_WAIT_TIME_SECONDS = 20;
     private final SqsClient sqsClient;
-    private final ReceiverProperties receiverProperties;
-    private final Scheduler taskScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "taskThread");
-
+    private final SQSListenerProperties.SQS.Listener listenerProperties;
     private final Scheduler subscribeScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "subscribeThread");
+    //TODO: Research about concurrency, review if DEFAULT_BOUNDED_ELASTIC_SIZE / 2 is ok
+    private final int DEFAULT_CONCURRENCY = DEFAULT_BOUNDED_ELASTIC_SIZE / 2;
+    private Scheduler taskScheduler;
 
-    public SqsMessageReceiver(SqsClient sqsClient, ReceiverProperties receiverProperties) {
+    public SqsMessageListener(SqsClient sqsClient, SQSListenerProperties.SQS.Listener listenerProperties) {
         this.sqsClient = sqsClient;
-        this.receiverProperties = receiverProperties;
+        this.listenerProperties = listenerProperties;
     }
-
 
     @Override
     public void execute(Function<String, Either<?, Void>> eventHandler) {
         receiveMessages()
                 .flatMapIterable(Function.identity())
-                .doOnError(this::handlerErrorReceivingMessages)
+                .doOnError(this::handleReceivingMessagesError)
                 .retry()
-                .flatMap(message -> processMessage(message, eventHandler), receiverProperties.getConcurrency())
+                .flatMap(message -> processMessage(message, eventHandler), getConcurrency())
                 .subscribeOn(subscribeScheduler)
                 .subscribe();
     }
@@ -49,9 +54,9 @@ public class SqsMessageReceiver implements MessageReceiver {
         return Flux.generate(
                 (SynchronousSink<List<Message>> sink) -> {
                     ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
-                            .queueUrl(receiverProperties.getQueueURL())
-                            .maxNumberOfMessages(5)
-                            .waitTimeSeconds(20)
+                            .queueUrl(listenerProperties.getQueueURL())
+                            .maxNumberOfMessages(getMaxNumberOfMessages())
+                            .waitTimeSeconds(getWaitTimeSeconds())
                             .build();
                     List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
                     LOGGER.debug("Received: {}", messages);
@@ -75,7 +80,41 @@ public class SqsMessageReceiver implements MessageReceiver {
                     return Mono.empty();
                 })
                 .then()
-                .subscribeOn(taskScheduler);
+                .subscribeOn(getTaskScheduler());
+    }
+
+    //TODO: Research about threadCap and queueSize, review if default values are ok
+    @Override
+    public Scheduler getTaskScheduler() {
+        if (Objects.isNull(taskScheduler)) {
+            taskScheduler = Schedulers.newBoundedElastic(getMaximumNumberOfThreads(), getMaximumQueueCapacity(), "taskThread");
+        }
+        return taskScheduler;
+    }
+
+    @Override
+    public int getMaximumNumberOfThreads() {
+        return listenerProperties.getMaximumNumberOfThreads() != 0 ? listenerProperties.getMaximumNumberOfThreads() : DEFAULT_BOUNDED_ELASTIC_SIZE;
+    }
+
+    @Override
+    public int getConcurrency() {
+        return listenerProperties.getConcurrency() != 0 ? listenerProperties.getConcurrency() : DEFAULT_CONCURRENCY;
+    }
+
+    @Override
+    public int getMaxNumberOfMessages() {
+        return listenerProperties.getMaxNumberOfMessages() != 0 ? listenerProperties.getMaxNumberOfMessages() : DEFAULT_MAX_NUMBER_OF_MESSAGES;
+    }
+
+    @Override
+    public int getMaximumQueueCapacity() {
+        return listenerProperties.getMaximumQueueCapacity() != 0 ? listenerProperties.getMaximumQueueCapacity() : DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
+    }
+
+    @Override
+    public int getWaitTimeSeconds() {
+        return listenerProperties.getWaitTimeSeconds() != 0 ? listenerProperties.getWaitTimeSeconds() : DEFAULT_WAIT_TIME_SECONDS;
     }
 
     private Mono<SqsResponse> handleEventHandlerSuccess(Message message, Either<?, Void> eventHandlerResult) {
@@ -92,20 +131,20 @@ public class SqsMessageReceiver implements MessageReceiver {
                 .doOnNext(e -> LOGGER.debug("Changed visibility timeout: {}", message.body()));
     }
 
-    private void handlerErrorReceivingMessages(Throwable t) {
+    private void handleReceivingMessagesError(Throwable t) {
         LOGGER.error(t.getMessage());
     }
 
     private Mono<SqsResponse> deleteQueueMessage(String receiptHandle) {
         return Mono.just(sqsClient.deleteMessage(builder -> builder
-                .queueUrl(receiverProperties.getQueueURL())
+                .queueUrl(listenerProperties.getQueueURL())
                 .receiptHandle(receiptHandle)));
     }
 
     private Mono<SqsResponse> changeVisibilityTimeout(String receiptHandle) {
         return Mono.just(sqsClient.changeMessageVisibility(builder -> builder
-                .queueUrl(receiverProperties.getQueueURL())
+                .queueUrl(listenerProperties.getQueueURL())
                 .receiptHandle(receiptHandle)
-                .visibilityTimeout(5)));
+                .visibilityTimeout(listenerProperties.getVisibilityTimeout())));
     }
 }
