@@ -12,7 +12,6 @@ cloud:
           region: us-east-1
           maxNumberOfMessages: 10 #optional
           waitTimeSeconds: 20 #optional
-          #TODO: Review if delay time is better to handle retries
           visibilityTimeout: 5 #required
           #maximumNumberOfThreads: 100 #optional
           #concurrency: 10 #optional
