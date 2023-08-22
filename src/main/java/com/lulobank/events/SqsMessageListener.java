@@ -41,7 +41,7 @@ public class SqsMessageListener implements MessageListener {
     }
 
     @Override
-    public void execute(Function<String, Either<?, Void>> eventHandler) {
+    public void listen(Function<String, Either<?, Void>> eventHandler) {
         receiveMessages()
                 .flatMapIterable(Function.identity())
                 .doOnError(this::handleReceivingMessagesError)

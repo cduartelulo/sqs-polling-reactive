@@ -19,8 +19,6 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'software.amazon.awssdk:sqs'
-    implementation 'software.amazon.awssdk:sso'
-    implementation 'software.amazon.awssdk:ssooidc'
     implementation 'io.vavr:vavr:0.10.3'
     implementation 'io.projectreactor:reactor-core:3.4.29'
 

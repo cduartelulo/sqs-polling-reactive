@@ -15,7 +15,7 @@ public interface MessageListener {
      *
      * @param eventHandler - describes how a message should be handled
      */
-    void execute(Function<String, Either<?, Void>> eventHandler);
+    void listen(Function<String, Either<?, Void>> eventHandler);
 
     Flux<List<Message>> receiveMessages();
 

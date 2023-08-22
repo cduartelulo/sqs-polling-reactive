@@ -15,12 +15,12 @@ class SqsMessageListenerTest extends AbstractIntegrationTest {
 
     @Test
     void testWhenHandlerNotHaveError() {
-        messageListener.execute(message -> Either.right(null));
+        messageListener.listen(message -> Either.right(null));
     }
 
     @Test
     void testWhenHandlerHaveError() {
-        messageListener.execute(message -> Either.left(new RuntimeException("Error handling the message: " + message)));
+        messageListener.listen(message -> Either.left(new RuntimeException("Error handling the message: " + message)));
     }
 
 }

@@ -24,7 +24,7 @@ public class MessageListenerRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         messageListener
-                .execute(message ->
+                .listen(message ->
                         {
                             Try.run(() -> Thread.sleep(new Random().nextInt(2000)));
                             LOGGER.debug("Message processed: {}", message);
