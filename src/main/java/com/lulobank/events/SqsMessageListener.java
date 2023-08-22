@@ -29,7 +29,6 @@ public class SqsMessageListener implements MessageListener {
     private final SqsClient sqsClient;
     private final SQSListenerProperties.SQS.Listener listenerProperties;
 
-    // TODO: Review if subscribeScheduler is needed, if so, review the parameters
     private final Scheduler subscribeScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "subscribeThread");
     private final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
     private Scheduler taskScheduler;
@@ -76,7 +75,6 @@ public class SqsMessageListener implements MessageListener {
                                 .subscribe()
                 ))
                 .onErrorResume(t -> {
-                    //TODO make it more fluent, review the fallback strategy
                     LOGGER.error(t.getMessage());
                     return Mono.empty();
                 })
@@ -84,7 +82,6 @@ public class SqsMessageListener implements MessageListener {
                 .subscribeOn(getTaskScheduler());
     }
 
-    //TODO: Research about threadCap and queueSize, review if default values are ok
     @Override
     public Scheduler getTaskScheduler() {
         if (Objects.isNull(taskScheduler)) {
@@ -121,15 +118,13 @@ public class SqsMessageListener implements MessageListener {
     private Mono<SqsResponse> handleEventHandlerSuccess(Message message, Either<?, Void> eventHandlerResult) {
         return Mono.justOrEmpty(eventHandlerResult.get())
                 .then(deleteQueueMessage(message.receiptHandle()))
-                //TODO: Error handling, take into account the backoff strategy provided by the SDK, maybe a fallback strategy?
-                .doOnNext(e -> LOGGER.debug("Deleted message: {}", message.body()));
+                .doOnNext(e -> LOGGER.debug("Deleted message: {}", message.messageId()));
     }
 
     private Mono<SqsResponse> handleEventHandlerError(Message message, Either<?, Void> eventHandlerResult) {
         return Mono.just(eventHandlerResult.getLeft())
                 .then(changeVisibilityTimeout(message.receiptHandle()))
-                //TODO: Error handling, take into account the backoff strategy provided by the SDK, maybe a fallback strategy?
-                .doOnNext(e -> LOGGER.debug("Changed visibility timeout: {}", message.body()));
+                .doOnNext(e -> LOGGER.debug("Changed visibility timeout: {}", message.messageId()));
     }
 
     private void handleReceivingMessagesError(Throwable t) {
