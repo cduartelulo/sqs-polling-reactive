@@ -14,9 +14,9 @@ cloud:
           waitTimeSeconds: 20 #optional
           #TODO: Review if delay time is better to handle retries
           visibilityTimeout: 5 #required
-          maximumNumberOfThreads: 100 #optional
-          concurrency: 50 #optional
-          maximumQueueCapacity: 10000 #optional
+          #maximumNumberOfThreads: 100 #optional
+          #concurrency: 10 #optional
+          #maximumQueueCapacity: 10000 #optional
         -
           name: listener2
           queueURL: https://sqs.us-east-1.amazonaws.com/900852371335/cduarte-queue
@@ -25,6 +25,6 @@ cloud:
           waitTimeSeconds: 20 #optional
           visibilityTimeout: 5 #required
           maximumNumberOfThreads: 100 #optional
-          concurrency: 50 #optional
+          concurrency: 10 #optional
           maximumQueueCapacity: 10000 #optional
       endpoint: http://localhost:4566

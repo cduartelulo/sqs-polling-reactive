@@ -31,8 +31,7 @@ public class SqsMessageListener implements MessageListener {
 
     // TODO: Review if subscribeScheduler is needed, if so, review the parameters
     private final Scheduler subscribeScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "subscribeThread");
-    //TODO: Research about concurrency, review if DEFAULT_BOUNDED_ELASTIC_SIZE / 2 is ok
-    private final int DEFAULT_CONCURRENCY = DEFAULT_BOUNDED_ELASTIC_SIZE / 2;
+    private final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
     private Scheduler taskScheduler;
 
     public SqsMessageListener(SqsClient sqsClient, SQSListenerProperties.SQS.Listener listenerProperties) {
@@ -105,13 +104,13 @@ public class SqsMessageListener implements MessageListener {
     }
 
     @Override
-    public int getMaxNumberOfMessages() {
-        return listenerProperties.getMaxNumberOfMessages() != 0 ? listenerProperties.getMaxNumberOfMessages() : DEFAULT_MAX_NUMBER_OF_MESSAGES;
+    public int getMaximumQueueCapacity() {
+        return listenerProperties.getMaximumQueueCapacity() != 0 ? listenerProperties.getMaximumQueueCapacity() : DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
     }
 
     @Override
-    public int getMaximumQueueCapacity() {
-        return listenerProperties.getMaximumQueueCapacity() != 0 ? listenerProperties.getMaximumQueueCapacity() : DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
+    public int getMaxNumberOfMessages() {
+        return listenerProperties.getMaxNumberOfMessages() != 0 ? listenerProperties.getMaxNumberOfMessages() : DEFAULT_MAX_NUMBER_OF_MESSAGES;
     }
 
     @Override
