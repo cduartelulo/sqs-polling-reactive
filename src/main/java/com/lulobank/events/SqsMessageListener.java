@@ -40,7 +40,7 @@ public class SqsMessageListener implements MessageListener {
     }
 
     @Override
-    public void listen(Function<String, Either<?, Void>> eventHandler) {
+    public void listen(Function<Message, Either<?, Void>> eventHandler) {
         receiveMessages()
                 .flatMapIterable(Function.identity())
                 .doOnError(this::handleReceivingMessagesError)
@@ -67,8 +67,8 @@ public class SqsMessageListener implements MessageListener {
     }
 
     @Override
-    public Mono<Void> processMessage(Message message, Function<String, Either<?, Void>> eventHandler) {
-        return Mono.fromSupplier(() -> eventHandler.apply(message.body()))
+    public Mono<Void> processMessage(Message message, Function<Message, Either<?, Void>> eventHandler) {
+        return Mono.fromSupplier(() -> eventHandler.apply(message))
                 .doOnNext(either -> either.fold(
                         left -> handleEventHandlerError(message, either)
                                 .subscribe(),

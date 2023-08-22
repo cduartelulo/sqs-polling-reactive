@@ -15,11 +15,11 @@ public interface MessageListener {
      *
      * @param eventHandler - describes how a message should be handled
      */
-    void listen(Function<String, Either<?, Void>> eventHandler);
+    void listen(Function<Message, Either<?, Void>> eventHandler);
 
     Flux<List<Message>> receiveMessages();
 
-    Mono<Void> processMessage(Message message, Function<String, Either<?, Void>> eventHandler);
+    Mono<Void> processMessage(Message message, Function<Message, Either<?, Void>> eventHandler);
 
     Scheduler getTaskScheduler();
 

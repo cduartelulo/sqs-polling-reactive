@@ -27,8 +27,10 @@ public class MessageListenerRunner implements ApplicationRunner {
                 .listen(message ->
                         {
                             Try.run(() -> Thread.sleep(new Random().nextInt(2000)));
-                            LOGGER.debug("Message processed: {}", message);
-                            return Either.right(null);
+                            LOGGER.debug("Message processed, body: {}, attributes: {}",
+                                    message.body(),
+                                    message.messageAttributes());
+                            return Either.left(new RuntimeException("Error"));
                         }
                 );
     }
