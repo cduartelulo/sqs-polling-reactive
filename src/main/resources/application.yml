@@ -5,25 +5,24 @@ logging:
 cloud:
   aws:
     sqs:
-      listeners:
-        -
-          name: listener1
-          queueURL: http://localhost:4566/000000000000/cduarte-queue
-          region: us-east-1
-          maxNumberOfMessages: 10 #optional
-          waitTimeSeconds: 20 #optional
-          visibilityTimeout: 5 #required
-          #maximumNumberOfThreads: 100 #optional
-          #concurrency: 10 #optional
-          #maximumQueueCapacity: 10000 #optional
-        -
-          name: listener2
-          queueURL: https://sqs.us-east-1.amazonaws.com/900852371335/cduarte-queue
-          region: us-east-1
-          maxNumberOfMessages: 5 #optional
-          waitTimeSeconds: 20 #optional
-          visibilityTimeout: 5 #required
-          maximumNumberOfThreads: 100 #optional
-          concurrency: 10 #optional
-          maximumQueueCapacity: 10000 #optional
+      listener1:
+        queueName: cduarte-queue
+        queueUrl: http://localhost:4566/000000000000/cduarte-queue
+        region: us-east-1
+        maxNumberOfMessages: 10 #optional
+        waitTimeSeconds: 20 #optional
+        visibilityTimeout: 5 #required
+        #maximumNumberOfThreads: 100 #optional
+        #concurrency: 10 #optional
+        #maximumQueueCapacity: 10000 #optional
+      listener2:
+        name: listener2
+        queueURL: https://sqs.us-east-1.amazonaws.com/900852371335/cduarte-queue
+        region: us-east-1
+        maxNumberOfMessages: 5 #optional
+        waitTimeSeconds: 20 #optional
+        visibilityTimeout: 5 #required
+        maximumNumberOfThreads: 100 #optional
+        concurrency: 10 #optional
+        maximumQueueCapacity: 10000 #optional
       endpoint: http://localhost:4566

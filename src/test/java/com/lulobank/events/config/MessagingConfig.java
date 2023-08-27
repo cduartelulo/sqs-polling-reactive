@@ -1,7 +1,5 @@
 package com.lulobank.events.config;
 
-import com.lulobank.events.MessageListener;
-import com.lulobank.events.SqsMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,10 +26,5 @@ public class MessagingConfig {
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(localstack.getAccessKey(), localstack.getSecretKey())))
                 .region(Region.of(localstack.getRegion()))
                 .build();
-    }
-
-    @Bean
-    public MessageListener messageListener1(@Autowired SqsClient sqsClient, @Autowired SQSListenerProperties awsProperties) {
-        return new SqsMessageListener(sqsClient, awsProperties.getSqs().getListeners().get(0));
     }
 }

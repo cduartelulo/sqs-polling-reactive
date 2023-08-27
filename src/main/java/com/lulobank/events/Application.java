@@ -1,12 +1,9 @@
 package com.lulobank.events;
 
-import com.lulobank.events.config.SQSListenerProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(SQSListenerProperties.class)
 class Application {
 
     public static void main(String[] args) {

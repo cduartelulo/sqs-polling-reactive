@@ -19,8 +19,14 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'software.amazon.awssdk:sqs'
+    implementation 'software.amazon.awssdk:arns'
     implementation 'io.vavr:vavr:0.10.3'
     implementation 'io.projectreactor:reactor-core:3.4.29'
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.14.3')
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'junit', module: 'junit'
@@ -29,6 +35,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.testcontainers:localstack:1.18.0'
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+    testCompileOnly 'org.projectlombok:lombok:1.18.28'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.28'
 }
 
 dependencyManagement {
