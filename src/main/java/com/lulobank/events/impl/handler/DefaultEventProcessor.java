@@ -40,7 +40,7 @@ public class DefaultEventProcessor implements EventProcessor {
 
     public Either<?, Void> handle(String event, Map<String, String> attributes) {
         return Option.of(eventRegistry.handlers().get(getEventType(event)))
-                .map(eh -> process(eh, event, attributes))
+                .map(eh -> process(eh, event))
                 //TODO: To review
                 //.map(e -> e.mapLeft(this::filterMapLeftProcessEvent))
                 .onEmpty(() -> log.error("Unknown Event Handler {}", json(event)))
@@ -68,10 +68,6 @@ public class DefaultEventProcessor implements EventProcessor {
     }
 
     private <T> Either<Event<T>, Void> process(EventHandler<T> eh, String event) {
-        return process(eh, event, null);
-    }
-
-    private <T> Either<Event<T>, Void> process(EventHandler<T> eh, String event, Map<String, String> attributes) {
         Try<Event<T>> events = readValue(eh, event);
         return events
                 .flatMap(e -> eh.execute(e.getPayload()))

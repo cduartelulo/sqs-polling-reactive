@@ -8,10 +8,6 @@ public interface EventHandler<T> {
 
     Try<Void> execute(T event);
 
-    default Try<Void> execute(T event, Map<String, String> attributes) {
-        return execute(event);
-    }
-
     Class<T> eventClass();
 
     default Event<T> customListener(Event<T> event) {

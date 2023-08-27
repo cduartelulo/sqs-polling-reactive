@@ -2,8 +2,7 @@ package com.lulobank.events.application;
 
 import com.lulobank.events.api.handler.EventMessage;
 import com.lulobank.events.api.handler.EventProcessor;
-import com.lulobank.events.impl.config.MessageListenerConfig;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.lulobank.events.impl.config.MessagingConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -14,7 +13,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import java.net.URI;
 
 @Configuration
-@Import(MessageListenerConfig.class)
+@Import(MessagingConfig.class)
 public class ApplicationConfig {
 
     private static final String LOCALSTACK_URL = "http://localhost:4566";
@@ -38,7 +37,7 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public FeatureFlagsListener featureFlagsListener(@Autowired EventProcessor eventProcessor) {
+    public FeatureFlagsListener featureFlagsListener(EventProcessor eventProcessor) {
         return new FeatureFlagsListener(eventProcessor);
     }
     @EventMessage(name="FeatureFlagsEvent")

@@ -1,4 +1,7 @@
-package com.lulobank.events.api.handler;
+package com.lulobank.events.impl.handler;
+
+import com.lulobank.events.api.handler.EventHandler;
+import com.lulobank.events.api.handler.EventRegistry;
 
 import java.util.Map;
 
