@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lulobank.events.api.handler.Event;
 import com.lulobank.events.api.handler.EventHandler;
+import com.lulobank.events.api.handler.EventProcessor;
 import com.lulobank.events.api.handler.EventRegistry;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
@@ -15,9 +16,13 @@ import java.util.Map;
 
 import static com.lulobank.events.impl.utils.EventUtils.json;
 
-
+/**
+ * Default implementation for Event Processor
+ * @author Carlos Duarte
+ * See {@link com.lulobank.events.api.handler.EventProcessor} for more information
+ */
 @Slf4j
-public class DefaultEventProcessor implements com.lulobank.events.api.handler.EventProcessor {
+public class DefaultEventProcessor implements EventProcessor {
 
     private final EventRegistry eventRegistry;
 

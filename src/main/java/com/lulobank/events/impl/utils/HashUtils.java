@@ -3,6 +3,10 @@ package com.lulobank.events.impl.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Utils for hashing operations
+ * @author Carlos Duarte
+ */
 public class HashUtils {
 
     public static String calculateSHA256Hash(String input) throws NoSuchAlgorithmException {

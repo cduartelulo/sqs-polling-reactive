@@ -2,6 +2,11 @@ package com.lulobank.events.api.receiver;
 
 import java.util.Map;
 
+/**
+ * This class is a simplified version of the Message class from the AWS SDK for Java.
+ * It is used to avoid a dependency on the AWS SDK for Java.
+ * @author Carlos Duarte
+ */
 public class Message {
 
     private final String messageId;

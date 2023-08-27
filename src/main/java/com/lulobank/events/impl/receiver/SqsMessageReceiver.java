@@ -2,7 +2,6 @@ package com.lulobank.events.impl.receiver;
 
 import com.lulobank.events.api.receiver.Message;
 import com.lulobank.events.api.receiver.MessageReceiver;
-import com.lulobank.events.impl.listener.SqsListenerProperties;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,10 @@ import java.util.stream.Collectors;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_SIZE;
 
-
+/**
+ * SQS message receiver in a reactive way, receives messages from SQS queue and process them
+ * @author Carlos Duarte
+ */
 public class SqsMessageReceiver implements MessageReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqsMessageReceiver.class);
@@ -38,16 +40,16 @@ public class SqsMessageReceiver implements MessageReceiver {
 
     private final String queueUrl;
 
-    private final SqsListenerProperties sqsMessageReceiverProperties;
+    private final SqsReceiverProperties sqsReceiverProperties;
 
     private final Scheduler subscribeScheduler = Schedulers.newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE, "subscribeThread");
 
     private Scheduler taskScheduler;
 
-    public SqsMessageReceiver(SqsClient sqsClient, String queueUrl, SqsListenerProperties sqsMessageReceiverProperties) {
+    public SqsMessageReceiver(SqsClient sqsClient, String queueUrl, SqsReceiverProperties sqsReceiverProperties) {
         this.sqsClient = sqsClient;
         this.queueUrl = queueUrl;
-        this.sqsMessageReceiverProperties = sqsMessageReceiverProperties;
+        this.sqsReceiverProperties = sqsReceiverProperties;
     }
 
     @Override
@@ -135,37 +137,37 @@ public class SqsMessageReceiver implements MessageReceiver {
     }
 
     private int getMaxNumberOfMessages() {
-        int maxNumberOfMessages = sqsMessageReceiverProperties.getMaxMessagesPerPoll().getOrElse(DEFAULT_MAX_NUMBER_OF_MESSAGES);
+        int maxNumberOfMessages = sqsReceiverProperties.getMaxMessagesPerPoll().getOrElse(DEFAULT_MAX_NUMBER_OF_MESSAGES);
         Assert.isTrue(maxNumberOfMessages > 0, "maxMessagesPerPoll must be greater than 0");
         return Math.min(maxNumberOfMessages, DEFAULT_MAX_NUMBER_OF_MESSAGES);
     }
 
     private int getWaitTimeSeconds() {
-        int waitTimeSeconds = sqsMessageReceiverProperties.getMaxWaitTimeSecondsPerPoll().getOrElse(DEFAULT_WAIT_TIME_SECONDS);
+        int waitTimeSeconds = sqsReceiverProperties.getMaxWaitTimeSecondsPerPoll().getOrElse(DEFAULT_WAIT_TIME_SECONDS);
         Assert.isTrue(waitTimeSeconds > 0, "maxWaitTimeoutSecondsPerPoll must be greater than 0");
         return Math.min(waitTimeSeconds, DEFAULT_WAIT_TIME_SECONDS);
     }
 
     private int getVisibilityTimeout() {
-        int visibilityTimeout = sqsMessageReceiverProperties.getRetryDelaySeconds().getOrElse(0);
+        int visibilityTimeout = sqsReceiverProperties.getRetryDelaySeconds().getOrElse(0);
         Assert.isTrue(visibilityTimeout > 0, "retryDelaySeconds must be greater than 0");
         return visibilityTimeout;
     }
 
     private int getMaxConcurrentMessages() {
-        int maxConcurrentMessages = sqsMessageReceiverProperties.getMaxConcurrentMessages().getOrElse(DEFAULT_CONCURRENCY);
+        int maxConcurrentMessages = sqsReceiverProperties.getMaxConcurrentMessages().getOrElse(DEFAULT_CONCURRENCY);
         Assert.isTrue(maxConcurrentMessages > 0, "maxConcurrentMessages must be greater than 0");
         return maxConcurrentMessages;
     }
 
     private int getThreadCap() {
-        int maxNumberOfThreads = sqsMessageReceiverProperties.getMaxNumberOfThreads().getOrElse(DEFAULT_BOUNDED_ELASTIC_SIZE);
+        int maxNumberOfThreads = sqsReceiverProperties.getMaxNumberOfThreads().getOrElse(DEFAULT_BOUNDED_ELASTIC_SIZE);
         Assert.isTrue(maxNumberOfThreads > 0, "maxNumberOfThreads must be greater than 0");
         return maxNumberOfThreads;
     }
 
     private int getQueuedTaskCap() {
-        int maxQueueCapacity = sqsMessageReceiverProperties.getMaxQueueCapacity().getOrElse(DEFAULT_BOUNDED_ELASTIC_QUEUESIZE);
+        int maxQueueCapacity = sqsReceiverProperties.getMaxQueueCapacity().getOrElse(DEFAULT_BOUNDED_ELASTIC_QUEUESIZE);
         Assert.isTrue(maxQueueCapacity > 0, "maxQueueCapacity must be greater than 0");
         return maxQueueCapacity;
     }

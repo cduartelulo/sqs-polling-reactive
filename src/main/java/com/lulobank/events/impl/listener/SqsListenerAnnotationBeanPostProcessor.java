@@ -1,23 +1,9 @@
-/*
- * Copyright 2013-2022 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.lulobank.events.impl.listener;
 
 import com.lulobank.events.api.listener.SqsListener;
 import com.lulobank.events.api.receiver.MessageReceiver;
 import com.lulobank.events.impl.receiver.SqsMessageReceiverBeanDefinitionRegistrar;
+import com.lulobank.events.impl.receiver.SqsReceiverProperties;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import org.springframework.aop.support.AopUtils;
@@ -39,8 +25,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * {@link SqsListenerAnnotationBeanPostProcessor} implementation for {@link SqsListener @SqsListener}.
- *
+ * Bean post processor to register the message listeners from the annotations {@link SqsListener}
  * @author Carlos Duarte
  */
 public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
@@ -87,7 +72,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
     protected MessageListenerContainer createAndConfigureMessageListener(SqsListener annotation, Method method) {
 
-        SqsListenerProperties sqsMessageProperties = SqsListenerProperties.builder()
+        SqsReceiverProperties sqsReceiverProperties = SqsReceiverProperties.builder()
                 .maxMessagesPerPoll(Option.of(resolveAsInteger(annotation.maxMessagesPerPoll(), "maxMessagesPerPoll")))
                 .maxWaitTimeoutSecondsPerPoll(Option.of(resolveAsInteger(annotation.maxWaitTimeSecondsPerPoll(), "maxWaitTimeoutSecondsPerPoll")))
                 .retryDelaySeconds(Option.of(resolveAsInteger(annotation.retryDelaySeconds(), "retryDelaySeconds")))
@@ -96,7 +81,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
                 .maxQueueCapacity(Option.of(resolveAsInteger(annotation.maxQueueCapacity(), "maxQueueCapacity")))
                 .build();
         SqsClient sqsClient = beanFactory.getBean(annotation.sqsClientBean(), SqsClient.class);
-        MessageReceiver messageReceiver = registrarBean.registerBean(sqsClient, resolveAsString(annotation.value(), "queue"), sqsMessageProperties);
+        MessageReceiver messageReceiver = registrarBean.registerBean(sqsClient, resolveAsString(annotation.value(), "queue"), sqsReceiverProperties);
         return new MessageListenerContainer(messageReceiver, method);
     }
 

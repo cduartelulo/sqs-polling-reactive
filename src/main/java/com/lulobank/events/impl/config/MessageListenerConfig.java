@@ -14,6 +14,12 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
 
+/**
+ * Spring configuration class to configure the MessageListener. Use @Import to import this configuration.
+ * See {@link org.springframework.context.annotation.Import} for more information.
+ *
+ * @author Carlos Duarte
+ */
 @Configuration
 public class MessageListenerConfig {
 

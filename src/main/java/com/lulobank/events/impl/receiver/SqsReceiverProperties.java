@@ -1,8 +1,12 @@
-package com.lulobank.events.impl.listener;
+package com.lulobank.events.impl.receiver;
 
 import io.vavr.control.Option;
 
-public class SqsListenerProperties {
+/**
+ * Define the properties to configure the receiver of messages from the queue
+ * @author Carlos Duarte
+ */
+public class SqsReceiverProperties {
 
     private final Option<Integer> maxMessagesPerPoll;
 
@@ -17,7 +21,7 @@ public class SqsListenerProperties {
     private final Option<Integer> maxQueueCapacity;
 
 
-    public SqsListenerProperties(Builder builder) {
+    public SqsReceiverProperties(Builder builder) {
         this.maxMessagesPerPoll = builder.maxMessagesPerPoll;
         this.maxWaitTimeoutSecondsPerPoll = builder.maxWaitTimeoutSecondsPerPoll;
         this.retryDelaySeconds = builder.retryDelaySeconds;
@@ -98,8 +102,8 @@ public class SqsListenerProperties {
             return this;
         }
 
-        public SqsListenerProperties build() {
-            return new SqsListenerProperties(this);
+        public SqsReceiverProperties build() {
+            return new SqsReceiverProperties(this);
         }
     }
 

@@ -1,26 +1,28 @@
 package com.lulobank.events.impl.receiver;
 
 import com.lulobank.events.impl.listener.QueueUrlResolver;
-import com.lulobank.events.impl.listener.SqsListenerProperties;
 import com.lulobank.events.impl.utils.HashUtils;
 import io.vavr.control.Try;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.lang.NonNull;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
+/**
+ * Bean Factory to register the message receivers from annotations {@link com.lulobank.events.api.listener.SqsListener}
+ * @author Carlos Duarte
+ */
 public class SqsMessageReceiverBeanDefinitionRegistrar implements BeanFactoryAware {
 
     private ConfigurableListableBeanFactory beanFactory;
 
-    public SqsMessageReceiver registerBean(SqsClient sqsClient, String queue, SqsListenerProperties sqsMessageReceiverProperties) {
+    public SqsMessageReceiver registerBean(SqsClient sqsClient, String queue, SqsReceiverProperties sqsReceiverProperties) {
         String queueUrlResolved = new QueueUrlResolver(queue, sqsClient).resolveQueueUrl();
         SqsMessageReceiver sqsMessageReceiver = new SqsMessageReceiver(
                 sqsClient,
                 queueUrlResolved,
-                sqsMessageReceiverProperties);
+                sqsReceiverProperties);
         String beanName = getBeanName(queueUrlResolved);
         beanFactory.initializeBean(sqsMessageReceiver, beanName);
         beanFactory.registerSingleton(beanName, sqsMessageReceiver);

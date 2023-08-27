@@ -9,6 +9,10 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+/**
+ * Resolve the queue url from the queue name
+ * @author Carlos Duarte
+ */
 public class QueueUrlResolver {
 
     private final String queue;
@@ -20,12 +24,21 @@ public class QueueUrlResolver {
         this.sqsClient = sqsClient;
     }
 
+    /**
+     * Resolve the queue url from the queue name
+     * @return String the queue url
+     */
     public String resolveQueueUrl() {
         return isValidQueueUrl(this.queue)
                 ? this.queue
                 : doResolveQueueUrl();
     }
 
+    /**
+     * Check if the queue name is a valid url
+     * @param name the queue name
+     * @return boolean
+     */
     private boolean isValidQueueUrl(String name) {
         try {
             URI candidate = new URI(name);
@@ -36,6 +49,10 @@ public class QueueUrlResolver {
         }
     }
 
+    /**
+     * Resolve the queue url from the queue name. Uses the ARN to resolve it
+     * @return String the queue url
+     */
     private String doResolveQueueUrl() {
         GetQueueUrlRequest.Builder getQueueUrlRequestBuilder = GetQueueUrlRequest.builder();
         Arn arn = getQueueArnFromUrl();
@@ -49,6 +66,10 @@ public class QueueUrlResolver {
         return this.sqsClient.getQueueUrl(getQueueUrlRequestBuilder.build()).queueUrl();
     }
 
+    /**
+     * Get the ARN from the queue url
+     * @return Arn
+     */
     @Nullable
     private Arn getQueueArnFromUrl() {
         try {
