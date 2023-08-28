@@ -14,7 +14,7 @@ public class FeatureFlagsListener {
         this.eventProcessor = eventProcessor;
     }
 
-    @SqsListener(value = "${cloud.aws.sqs.listener1.queueUrl}", sqsClientBean = "sqsClient1", retryDelaySeconds = "5")
+    @SqsListener(value = "${cloud.aws.sqs.listener1.queueUrl}", sqsClientBean = "sqsAsyncClient", retryDelaySeconds = "5")
     public Try<Void> execute(String message, Map<String, String> attributes) {
         return eventProcessor.handleTry(message, attributes);
     }

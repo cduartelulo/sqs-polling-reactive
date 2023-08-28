@@ -7,7 +7,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * Bean Factory to register the message receivers from annotations {@link com.lulobank.events.api.listener.SqsListener}
@@ -17,7 +17,7 @@ public class SqsMessageReceiverBeanDefinitionRegistrar implements BeanFactoryAwa
 
     private ConfigurableListableBeanFactory beanFactory;
 
-    public SqsMessageReceiver registerBean(SqsClient sqsClient, String queue, SqsReceiverProperties sqsReceiverProperties) {
+    public SqsMessageReceiver registerBean(SqsAsyncClient sqsClient, String queue, SqsReceiverProperties sqsReceiverProperties) {
         String queueUrlResolved = new QueueUrlResolver(queue, sqsClient).resolveQueueUrl();
         SqsMessageReceiver sqsMessageReceiver = new SqsMessageReceiver(
                 sqsClient,

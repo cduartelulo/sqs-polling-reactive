@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.net.URI;
@@ -19,7 +20,7 @@ public class ApplicationConfig {
     private static final String LOCALSTACK_URL = "http://localhost:4566";
 
     @Bean
-    public SqsClient sqsClient1() {
+    public SqsClient sqsSyncClient() {
         return SqsClient
                 .builder()
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("localstack", "localstack")))
@@ -28,8 +29,8 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public SqsClient sqsClient2() {
-        return SqsClient
+    public SqsAsyncClient sqsAsyncClient() {
+        return SqsAsyncClient
                 .builder()
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("localstack", "localstack")))
                 .endpointOverride(URI.create(LOCALSTACK_URL))

@@ -3,7 +3,7 @@ package com.lulobank.events.impl.listener;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import software.amazon.awssdk.arns.Arn;
-import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 
 import java.net.URI;
@@ -17,9 +17,9 @@ public class QueueUrlResolver {
 
     private final String queue;
 
-    private final SqsClient sqsClient;
+    private final SqsAsyncClient sqsClient;
 
-    public QueueUrlResolver(String queue, SqsClient sqsClient) {
+    public QueueUrlResolver(String queue, SqsAsyncClient sqsClient) {
         this.queue = queue;
         this.sqsClient = sqsClient;
     }
@@ -63,7 +63,7 @@ public class QueueUrlResolver {
         else {
             getQueueUrlRequestBuilder.queueName(this.queue);
         }
-        return this.sqsClient.getQueueUrl(getQueueUrlRequestBuilder.build()).queueUrl();
+        return this.sqsClient.getQueueUrl(getQueueUrlRequestBuilder.build()).join().queueUrl();
     }
 
     /**

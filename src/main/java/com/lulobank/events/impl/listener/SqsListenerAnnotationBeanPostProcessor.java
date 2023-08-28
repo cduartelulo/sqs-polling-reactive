@@ -15,7 +15,7 @@ import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
-import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -80,7 +80,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
                 .maxNumberOfThreads(Option.of(resolveAsInteger(annotation.maxNumberOfThreads(), "maxNumberOfThreads")))
                 .maxQueueCapacity(Option.of(resolveAsInteger(annotation.maxQueueCapacity(), "maxQueueCapacity")))
                 .build();
-        SqsClient sqsClient = beanFactory.getBean(annotation.sqsClientBean(), SqsClient.class);
+        SqsAsyncClient sqsClient = beanFactory.getBean(annotation.sqsClientBean(), SqsAsyncClient.class);
         MessageReceiver messageReceiver = registrarBean.registerBean(sqsClient, resolveAsString(annotation.value(), "queue"), sqsReceiverProperties);
         return new MessageListenerContainer(messageReceiver, method);
     }

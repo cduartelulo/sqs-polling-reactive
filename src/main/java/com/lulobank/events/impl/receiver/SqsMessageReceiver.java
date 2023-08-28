@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.*;
@@ -36,7 +36,7 @@ public class SqsMessageReceiver implements MessageReceiver {
 
     private static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
 
-    private final SqsClient sqsClient;
+    private final SqsAsyncClient sqsClient;
 
     private final String queueUrl;
 
@@ -46,7 +46,7 @@ public class SqsMessageReceiver implements MessageReceiver {
 
     private Scheduler taskScheduler;
 
-    public SqsMessageReceiver(SqsClient sqsClient, String queueUrl, SqsReceiverProperties sqsReceiverProperties) {
+    public SqsMessageReceiver(SqsAsyncClient sqsClient, String queueUrl, SqsReceiverProperties sqsReceiverProperties) {
         this.sqsClient = sqsClient;
         this.queueUrl = queueUrl;
         this.sqsReceiverProperties = sqsReceiverProperties;
@@ -74,6 +74,7 @@ public class SqsMessageReceiver implements MessageReceiver {
                             .build();
 
                     List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest)
+                            .join()
                             .messages()
                             .stream()
                             .map(message -> new Message(message.messageId(), message.body(), message.attributesAsStrings(), message.receiptHandle()))
