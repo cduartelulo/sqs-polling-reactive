@@ -11,15 +11,16 @@ import io.vavr.control.Either;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 
 import java.util.Map;
 
-import static com.lulobank.events.impl.utils.EventUtils.json;
+import static com.lulobank.events.api.utils.EventUtils.json;
 
 /**
  * Default implementation for Event Processor
  * @author Carlos Duarte
- * See {@link com.lulobank.events.api.handler.EventProcessor} for more information
+ * See {@link EventProcessor} for more information
  */
 @Slf4j
 public class DefaultEventProcessor implements EventProcessor {
@@ -39,25 +40,17 @@ public class DefaultEventProcessor implements EventProcessor {
     }
 
     public Either<?, Void> handle(String event, Map<String, String> attributes) {
+        Assert.isTrue(event != null && !event.isEmpty(), "Event cannot be null or empty");
         return Option.of(eventRegistry.handlers().get(getEventType(event)))
                 .map(eh -> process(eh, event))
-                //TODO: To review
-                //.map(e -> e.mapLeft(this::filterMapLeftProcessEvent))
                 .onEmpty(() -> log.error("Unknown Event Handler {}", json(event)))
-                .getOrElseThrow(() -> new RuntimeException("Error Exception"));
-
+                .getOrElse(Either.left(null));
     }
 
     public Try<Void> handleTry(String event, Map<String, String> attributes) {
-        return this.handle(event, attributes).toTry();
-    }
-
-    private <T> T filterMapLeftProcessEvent(T event) {
-        if (event == null) {
-            return null;
-        }else{
-            throw new ClassCastException("Error processing event handler");
-        }
+        return this.handle(event, attributes)
+                .fold(exception -> Try.failure(new RuntimeException("Unknown Event Handler " + json(event))),
+                        Try::success);
     }
 
     private String getEventType(String event) {

@@ -1,4 +1,4 @@
-package com.lulobank.events.api.listener;
+package com.lulobank.events.impl.listener;
 
 import org.springframework.core.annotation.AliasFor;
 

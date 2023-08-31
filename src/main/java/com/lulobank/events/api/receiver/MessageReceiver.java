@@ -4,6 +4,7 @@ import io.vavr.control.Try;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -22,8 +23,8 @@ public interface MessageReceiver {
     void executePoll(BiFunction<String, Map<String, String>, Try<Void>> messageHandler);
 
     /**
-     * Receives messages from a queue
-     * @return Flux of messages
+     * Returns a list of messages received from a queue
+     * @return List a messages in a Flux
      */
     Flux<List<Message>> receiveMessages();
 

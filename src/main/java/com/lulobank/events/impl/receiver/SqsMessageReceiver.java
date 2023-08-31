@@ -12,9 +12,12 @@ import reactor.core.publisher.SynchronousSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -23,7 +26,7 @@ import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZ
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_SIZE;
 
 /**
- * SQS message receiver in a reactive way, receives messages from SQS queue and process them
+ * SQS message receiver, in a reactive way, receives messages from the SQS queue and processes them
  * @author Carlos Duarte
  */
 public class SqsMessageReceiver implements MessageReceiver {
@@ -71,6 +74,7 @@ public class SqsMessageReceiver implements MessageReceiver {
                             .queueUrl(queueUrl)
                             .maxNumberOfMessages(getMaxNumberOfMessages())
                             .waitTimeSeconds(getWaitTimeSeconds())
+                            .attributeNames(QueueAttributeName.ALL)
                             .build();
 
                     List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest)
@@ -80,7 +84,6 @@ public class SqsMessageReceiver implements MessageReceiver {
                             .map(message -> new Message(message.messageId(), message.body(), message.attributesAsStrings(), message.receiptHandle()))
                             .collect(Collectors.toList());
 
-                    LOGGER.debug("Received: {}", messages);
                     sink.next(messages);
                 }
         );
@@ -91,6 +94,8 @@ public class SqsMessageReceiver implements MessageReceiver {
         return Mono.fromSupplier(() -> listener.apply(message.getBody(), message.getAttributes()))
                 .doOnNext(r -> r.onSuccess(e -> deleteQueueMessage(message.getReceiptHandle()))
                         .onFailure(e -> changeVisibilityTimeout(message.getReceiptHandle())))
+                .doOnSuccess(e -> LOGGER.debug("Processed message: {}, with receive count: {}", message.getMessageId(),
+                        message.getAttributes().get("ApproximateReceiveCount")))
                 .onErrorResume(t -> {
                     LOGGER.error(t.getMessage());
                     return Mono.empty();
@@ -150,7 +155,7 @@ public class SqsMessageReceiver implements MessageReceiver {
     }
 
     private int getVisibilityTimeout() {
-        int visibilityTimeout = sqsReceiverProperties.getRetryDelaySeconds().getOrElse(0);
+        int visibilityTimeout = sqsReceiverProperties.getRetryDelaySeconds().getOrElse(5);
         Assert.isTrue(visibilityTimeout > 0, "retryDelaySeconds must be greater than 0");
         return visibilityTimeout;
     }

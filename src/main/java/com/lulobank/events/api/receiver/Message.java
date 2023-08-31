@@ -1,5 +1,7 @@
 package com.lulobank.events.api.receiver;
 
+import lombok.Getter;
+
 import java.util.Map;
 
 /**
@@ -7,6 +9,7 @@ import java.util.Map;
  * It is used to avoid a dependency on the AWS SDK for Java.
  * @author Carlos Duarte
  */
+@Getter
 public class Message {
 
     private final String messageId;
@@ -21,22 +24,6 @@ public class Message {
         this.body = body;
         this.attributes = attributes;
         this.receiptHandle = receiptHandle;
-    }
-
-    public String getMessageId() {
-        return messageId;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public Map<String, String> getAttributes() {
-        return attributes;
-    }
-
-    public String getReceiptHandle() {
-        return receiptHandle;
     }
 
     public String toString() {

@@ -1,16 +1,16 @@
 package com.lulobank.events.impl.listener;
 
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 /**
  * Resolve the queue url from the queue name
+ *
  * @author Carlos Duarte
  */
 public class QueueUrlResolver {
@@ -26,6 +26,7 @@ public class QueueUrlResolver {
 
     /**
      * Resolve the queue url from the queue name
+     *
      * @return String the queue url
      */
     public String resolveQueueUrl() {
@@ -36,6 +37,7 @@ public class QueueUrlResolver {
 
     /**
      * Check if the queue name is a valid url
+     *
      * @param name the queue name
      * @return boolean
      */
@@ -43,40 +45,32 @@ public class QueueUrlResolver {
         try {
             URI candidate = new URI(name);
             return ("http".equals(candidate.getScheme()) || "https".equals(candidate.getScheme()));
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             return false;
         }
     }
 
     /**
      * Resolve the queue url from the queue name. Uses the ARN to resolve it
+     *
      * @return String the queue url
      */
     private String doResolveQueueUrl() {
-        GetQueueUrlRequest.Builder getQueueUrlRequestBuilder = GetQueueUrlRequest.builder();
-        Arn arn = getQueueArnFromUrl();
-        if (arn != null) {
-            Assert.isTrue(arn.accountId().isPresent(), "accountId is missing from arn");
-            getQueueUrlRequestBuilder.queueName(arn.resourceAsString()).queueOwnerAWSAccountId(arn.accountId().get());
-        }
-        else {
-            getQueueUrlRequestBuilder.queueName(this.queue);
-        }
-        return this.sqsClient.getQueueUrl(getQueueUrlRequestBuilder.build()).join().queueUrl();
+        return this.sqsClient
+                .getQueueUrl(
+                        buildGetQueueUrlRequest(Arn.fromString(this.queue))
+                ).join()
+                .queueUrl();
     }
 
-    /**
-     * Get the ARN from the queue url
-     * @return Arn
-     */
-    @Nullable
-    private Arn getQueueArnFromUrl() {
-        try {
-            return Arn.fromString(this.queue);
+    private GetQueueUrlRequest buildGetQueueUrlRequest(Arn arn) {
+        GetQueueUrlRequest.Builder getQueueUrlRequestBuilder = GetQueueUrlRequest.builder();
+        if (!Objects.isNull(arn)) {
+            String accountIdIsMissingFromArn = arn.accountId().orElseThrow(() -> new IllegalArgumentException("accountId is missing from arn"));
+            getQueueUrlRequestBuilder.queueName(arn.resourceAsString()).queueOwnerAWSAccountId(accountIdIsMissingFromArn);
+        } else {
+            getQueueUrlRequestBuilder.queueName(this.queue);
         }
-        catch (IllegalArgumentException e) {
-            return null;
-        }
+        return getQueueUrlRequestBuilder.build();
     }
 }

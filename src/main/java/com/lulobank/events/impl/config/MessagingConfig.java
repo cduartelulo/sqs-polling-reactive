@@ -3,9 +3,9 @@ package com.lulobank.events.impl.config;
 
 import com.lulobank.events.api.handler.EventHandler;
 import com.lulobank.events.api.handler.EventProcessor;
-import com.lulobank.events.impl.handler.DefaultEventProcessor;
 import com.lulobank.events.api.handler.EventRegistry;
-import com.lulobank.events.impl.handler.SqsRegistry;
+import com.lulobank.events.api.handler.SqsRegistry;
+import com.lulobank.events.impl.handler.DefaultEventProcessor;
 import com.lulobank.events.impl.listener.SqsListenerAnnotationBeanPostProcessor;
 import com.lulobank.events.impl.receiver.SqsMessageReceiverBeanDefinitionRegistrar;
 import org.springframework.context.annotation.Bean;

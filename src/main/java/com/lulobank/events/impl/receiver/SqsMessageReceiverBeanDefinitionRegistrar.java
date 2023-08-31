@@ -1,7 +1,8 @@
 package com.lulobank.events.impl.receiver;
 
+import com.lulobank.events.api.utils.HashUtils;
 import com.lulobank.events.impl.listener.QueueUrlResolver;
-import com.lulobank.events.impl.utils.HashUtils;
+import com.lulobank.events.impl.listener.SqsListener;
 import io.vavr.control.Try;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -10,7 +11,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
- * Bean Factory to register the message receivers from annotations {@link com.lulobank.events.api.listener.SqsListener}
+ * Bean Factory to register the message receivers from annotations {@link SqsListener}
  * @author Carlos Duarte
  */
 public class SqsMessageReceiverBeanDefinitionRegistrar implements BeanFactoryAware {
@@ -34,8 +35,9 @@ public class SqsMessageReceiverBeanDefinitionRegistrar implements BeanFactoryAwa
         this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
     }
 
+    @SuppressWarnings("java:S1612")
     private String getBeanName(String queueUrl) {
-        return Try.of(() ->  "sqsMessageReceiver" + HashUtils.calculateSHA256Hash(queueUrl)).getOrElseThrow((e) -> new RuntimeException(e));
+        return Try.of(() -> "sqsMessageReceiver" + HashUtils.calculateSHA256Hash(queueUrl)).getOrElseThrow(e -> new RuntimeException(e));
     }
 
 }

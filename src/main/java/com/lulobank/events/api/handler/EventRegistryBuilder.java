@@ -20,6 +20,7 @@ public class EventRegistryBuilder {
         return this;
     }
 
+    @SuppressWarnings("java:S1452")
     public Map<String, EventHandler<?>> build() {
         return handlers;
     }

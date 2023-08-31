@@ -1,11 +1,11 @@
 package com.lulobank.events.impl.listener;
 
-import com.lulobank.events.api.listener.SqsListener;
 import com.lulobank.events.api.receiver.MessageReceiver;
 import com.lulobank.events.impl.receiver.SqsMessageReceiverBeanDefinitionRegistrar;
 import com.lulobank.events.impl.receiver.SqsReceiverProperties;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
+import lombok.Getter;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -74,7 +74,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
         SqsReceiverProperties sqsReceiverProperties = SqsReceiverProperties.builder()
                 .maxMessagesPerPoll(Option.of(resolveAsInteger(annotation.maxMessagesPerPoll(), "maxMessagesPerPoll")))
-                .maxWaitTimeoutSecondsPerPoll(Option.of(resolveAsInteger(annotation.maxWaitTimeSecondsPerPoll(), "maxWaitTimeoutSecondsPerPoll")))
+                .maxWaitTimeSecondsPerPoll(Option.of(resolveAsInteger(annotation.maxWaitTimeSecondsPerPoll(), "maxWaitTimeoutSecondsPerPoll")))
                 .retryDelaySeconds(Option.of(resolveAsInteger(annotation.retryDelaySeconds(), "retryDelaySeconds")))
                 .maxConcurrentMessages(Option.of(resolveAsInteger(annotation.maxConcurrentMessages(), "maxConcurrentMessages")))
                 .maxNumberOfThreads(Option.of(resolveAsInteger(annotation.maxNumberOfThreads(), "maxNumberOfThreads")))
@@ -93,7 +93,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
             try {
                 result = (Try<Void>) method.invoke(bean, message, attributes);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
             return result;
         });
@@ -110,8 +110,9 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
     @Nullable
     protected Object resolveExpression(String value) {
-        return getExpressionResolver() != null
-                ? getExpressionResolver().evaluate(resolve(value), Objects.requireNonNull(getExpressionContext()))
+        BeanExpressionResolver expressionResolver1 = getExpressionResolver();
+        return expressionResolver1 != null
+                ? expressionResolver1.evaluate(resolve(value), Objects.requireNonNull(getExpressionContext()))
                 : value;
     }
 
@@ -178,6 +179,7 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         }
     }
 
+    @Getter
     public static class MessageListenerContainer {
 
         private final MessageReceiver messageListener;
@@ -187,14 +189,6 @@ public class SqsListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         public MessageListenerContainer(MessageReceiver messageListener, Method method) {
             this.messageListener = messageListener;
             this.method = method;
-        }
-
-        public MessageReceiver getMessageListener() {
-            return messageListener;
-        }
-
-        public Method getMethod() {
-            return method;
         }
 
     }
