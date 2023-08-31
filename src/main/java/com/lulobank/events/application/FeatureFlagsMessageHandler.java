@@ -7,7 +7,7 @@ public class FeatureFlagsMessageHandler implements EventHandler<FeatureFlagsMess
 
     @Override
     public Try<Void> execute(FeatureFlagsMessage message) {
-        return Try.success(null);
+        return Try.failure(new RuntimeException("Not implemented yet"));
     }
 
     @Override

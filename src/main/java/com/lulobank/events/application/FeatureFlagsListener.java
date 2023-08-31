@@ -1,7 +1,7 @@
 package com.lulobank.events.application;
 
 import com.lulobank.events.api.handler.EventProcessor;
-import com.lulobank.events.api.listener.SqsListener;
+import com.lulobank.events.impl.listener.SqsListener;
 import io.vavr.control.Try;
 
 import java.util.Map;

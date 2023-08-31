@@ -92,10 +92,15 @@ public class SqsMessageReceiver implements MessageReceiver {
     @Override
     public Mono<Void> processMessage(Message message, BiFunction<String, Map<String, String>, Try<Void>> listener) {
         return Mono.fromSupplier(() -> listener.apply(message.getBody(), message.getAttributes()))
-                .doOnNext(r -> r.onSuccess(e -> deleteQueueMessage(message.getReceiptHandle()))
-                        .onFailure(e -> changeVisibilityTimeout(message.getReceiptHandle())))
-                .doOnSuccess(e -> LOGGER.debug("Processed message: {}, with receive count: {}", message.getMessageId(),
-                        message.getAttributes().get("ApproximateReceiveCount")))
+                .doOnNext(r -> r.onSuccess(e -> {
+                                    LOGGER.debug("Message: {}, processed by MessageReceiver", message.getMessageId());
+                                    deleteQueueMessage(message.getReceiptHandle());
+                                })
+                                .onFailure(e -> {
+                                    LOGGER.error("Error processing message: {}, receive count: {}", message.getMessageId(), message.getAttributes().get("ApproximateReceiveCount"));
+                                    changeVisibilityTimeout(message.getReceiptHandle());
+                                })
+                )
                 .onErrorResume(t -> {
                     LOGGER.error(t.getMessage());
                     return Mono.empty();

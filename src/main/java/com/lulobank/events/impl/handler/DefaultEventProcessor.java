@@ -3,10 +3,7 @@ package com.lulobank.events.impl.handler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.lulobank.events.api.handler.Event;
-import com.lulobank.events.api.handler.EventHandler;
-import com.lulobank.events.api.handler.EventProcessor;
-import com.lulobank.events.api.handler.EventRegistry;
+import com.lulobank.events.api.handler.*;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
@@ -34,23 +31,23 @@ public class DefaultEventProcessor implements EventProcessor {
         objectMapper.registerModule(new JavaTimeModule());
     }
 
-    public Either<?, Void> handle(String event) {
+    public Either<MessageError, Void> handle(String event) {
         return this.handle(event, null);
 
     }
 
-    public Either<?, Void> handle(String event, Map<String, String> attributes) {
+    public Either<MessageError, Void> handle(String event, Map<String, String> attributes) {
         Assert.isTrue(event != null && !event.isEmpty(), "Event cannot be null or empty");
         return Option.of(eventRegistry.handlers().get(getEventType(event)))
                 .map(eh -> process(eh, event))
-                .onEmpty(() -> log.error("Unknown Event Handler {}", json(event)))
-                .getOrElse(Either.left(null));
+                .getOrElse(() -> Either.left(new MessageError("Unknown Event Handler " + json(event))))
+                .map(e -> null);
     }
 
     public Try<Void> handleTry(String event, Map<String, String> attributes) {
         return this.handle(event, attributes)
-                .fold(exception -> Try.failure(new RuntimeException("Unknown Event Handler " + json(event))),
-                        Try::success);
+                .fold(e -> Try.failure(new RuntimeException(e.getCause())),
+                        e -> Try.success(null));
     }
 
     private String getEventType(String event) {
@@ -60,11 +57,14 @@ public class DefaultEventProcessor implements EventProcessor {
                 .getOrElse("");
     }
 
-    private <T> Either<Event<T>, Void> process(EventHandler<T> eh, String event) {
-        Try<Event<T>> events = readValue(eh, event);
-        return events
-                .flatMap(e -> eh.execute(e.getPayload()))
-                .toEither(events.get());
+    private <T> Either<MessageError, Event<T>> process(EventHandler<T> eh, String event) {
+        Try<Event<T>> tryEvent = readValue(eh, event);
+        return tryEvent.flatMap(e ->
+                        eh.execute(e.getPayload())
+                )
+                .toEither()
+                .mapLeft(e -> new MessageError("Error executing handler " + eh.getClass().getName() + " " + e.getMessage()))
+                .map(e -> tryEvent.get());
     }
 
     private <T> Try<Event<T>> readValue(EventHandler<T> eh, String event) {

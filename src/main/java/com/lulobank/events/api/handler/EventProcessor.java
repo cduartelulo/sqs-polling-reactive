@@ -9,10 +9,9 @@ import java.util.Map;
 public interface EventProcessor {
 
     @SuppressWarnings("java:S1452")
-    Either<?, Void> handle(String event);
+    Either<MessageError, Void> handle(String event);
 
-    @SuppressWarnings("java:S1452")
-    Either<?, Void> handle(String event, Map<String, String> attributes);
+    Either<MessageError, Void> handle(String event, Map<String, String> attributes);
 
     Try<Void> handleTry(String event, Map<String, String> attributes);
 }
